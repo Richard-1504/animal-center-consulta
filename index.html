@@ -109,13 +109,14 @@ let data = null, tab = "hoy", invFilter = "todos", invQuery = "", saleQuery = ""
 // ---------- Inicio de sesión con Google (sin servidor propio) ----------
 function redirectUri() { return location.origin + location.pathname; }
 
-function signIn() {
+function signIn(select) {
   const state = crypto.getRandomValues(new Uint32Array(2)).join("-");
   store.set("ac_state", state);
   const params = new URLSearchParams({
     client_id: CLIENT_ID, redirect_uri: redirectUri(), response_type: "token",
     scope: SCOPE, include_granted_scopes: "true", state
   });
+  if (select) params.set("prompt", "select_account");
   location.href = "https://accounts.google.com/o/oauth2/v2/auth?" + params;
 }
 
@@ -151,7 +152,10 @@ async function load() {
     const q = encodeURIComponent(`name='${FILE_NAME}' and trashed=false`);
     const list = await (await drive(`https://www.googleapis.com/drive/v3/files?q=${q}&orderBy=modifiedTime%20desc&pageSize=1&fields=files(id)`)).json();
     if (!list.files || !list.files.length) {
-      showContent(`<div class="card center"><p class="msg">Todavía no hay datos en el Drive.<br>Conecta el programa de la tienda en Configuración → Nube y celular, y haz una venta o toca «Subir ahora».</p></div>`);
+      let who = "";
+      try { who = (await (await drive("https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)")).json()).user.emailAddress; } catch {}
+      showContent(`<div class="card center"><p class="msg">No hay datos de Animal Center en el Drive de <b>${esc(who || "esta cuenta")}</b>.<br>Entra con la cuenta de Google conectada en el PC de la tienda.</p><button class="primary" id="switchAcc">Cambiar de cuenta</button></div>`);
+      $("#switchAcc").onclick = () => { store.del("ac_token"); store.del("ac_cache"); signIn(true); };
       return;
     }
     data = await (await drive(`https://www.googleapis.com/drive/v3/files/${list.files[0].id}?alt=media`)).json();
