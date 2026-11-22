@@ -138,7 +138,7 @@ function token() {
 
 // ---------- Lectura del resumen desde el Drive ----------
 async function drive(url) {
-  const r = await fetch(url, { headers: { Authorization: "Bearer " + token() } });
+  const r = await fetch(url, { cache: "no-store", headers: { Authorization: "Bearer " + token() } });
   if (r.status === 401) { store.del("ac_token"); throw new Error("auth"); }
   if (!r.ok) throw new Error("Google Drive respondió " + r.status);
   return r;
