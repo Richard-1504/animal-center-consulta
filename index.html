@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Animal Center">
+<meta name="theme-color" content="#2d8b18">
+<title>Animal Center · Consulta</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>
+  :root { --green:#2d8b18; --teal:#00778b; --ink:#204130; --bg:#f5f9f3; --card:#fff; --muted:#5f7a68; --red:#b3261e; --amber:#a15c00; --line:#e3ece0; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  header { position:sticky; top:0; z-index:5; background:var(--card); border-bottom:1px solid var(--line);
+           padding:calc(env(safe-area-inset-top) + 10px) 16px 10px; display:flex; align-items:center; gap:10px; }
+  header img { width:38px; height:38px; border-radius:9px; }
+  header .t { flex:1; min-width:0; }
+  header h1 { font-size:17px; margin:0; }
+  #updated { font-size:12.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #updated.old { color:var(--red); font-weight:600; }
+  button { font:inherit; border:0; border-radius:12px; cursor:pointer; }
+  .icon-btn { background:var(--bg); color:var(--ink); width:40px; height:40px; font-size:20px; }
+  main { padding:14px 14px calc(env(safe-area-inset-bottom) + 86px); max-width:720px; margin:0 auto; }
+  .card { background:var(--card); border-radius:16px; padding:14px 16px; margin-bottom:12px; box-shadow:0 1px 2px rgba(32,65,48,.06); }
+  .card h2 { font-size:14px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:0 0 8px; }
+  .big { font-size:32px; font-weight:700; letter-spacing:-.01em; }
+  .sub { color:var(--muted); font-size:14px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .kpi { background:var(--bg); border-radius:12px; padding:10px 12px; }
+  .kpi .l { font-size:12.5px; color:var(--muted); }
+  .kpi .v { font-size:18px; font-weight:650; }
+  .row { display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid var(--line); }
+  .row:last-child { border-bottom:0; }
+  .row .main { min-width:0; }
+  .row .name { font-weight:600; overflow-wrap:anywhere; }
+  .row .meta { font-size:13px; color:var(--muted); }
+  .row .amt { font-weight:650; white-space:nowrap; text-align:right; }
+  .pill { display:inline-block; font-size:12px; font-weight:600; border-radius:999px; padding:2px 9px; }
+  .pill.ok { background:#e5f3e0; color:var(--green); }
+  .pill.off { background:#eceff1; color:#55626b; }
+  .pill.low { background:#fff1db; color:var(--amber); }
+  .pill.out { background:#fde7e5; color:var(--red); }
+  .row a { color:var(--teal); }
+  .void { text-decoration:line-through; color:var(--muted); }
+  input[type=search] { width:100%; font:inherit; padding:11px 14px; border:1px solid var(--line); border-radius:12px; background:var(--card); margin-bottom:10px; }
+  .chips { display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .chip { background:var(--card); border:1px solid var(--line); padding:6px 12px; border-radius:999px; font-size:14px; }
+  .chip.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+  nav { position:fixed; left:0; right:0; bottom:0; z-index:5; background:var(--card); border-top:1px solid var(--line);
+        display:grid; grid-template-columns:repeat(4,1fr); padding:6px 6px calc(env(safe-area-inset-bottom) + 6px); }
+  nav button { background:none; color:var(--muted); padding:6px 0; font-size:12px; display:flex; flex-direction:column; align-items:center; gap:2px; }
+  nav button span { font-size:21px; line-height:1; }
+  nav button.on { color:var(--green); font-weight:650; }
+  .center { text-align:center; padding:48px 20px; }
+  .primary { background:var(--green); color:#fff; padding:13px 22px; font-weight:650; font-size:16px; }
+  .msg { color:var(--muted); margin:12px 0 22px; }
+  .error { background:#fde7e5; color:var(--red); border-radius:12px; padding:10px 12px; margin-bottom:12px; font-size:14px; }
+  .empty { color:var(--muted); text-align:center; padding:18px 0; }
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+<header>
+  <img src="icon-192.png" alt="">
+  <div class="t"><h1>Animal Center</h1><div id="updated">Consulta en línea</div></div>
+  <button class="icon-btn" id="refresh" title="Actualizar" aria-label="Actualizar">↻</button>
+</header>
+
+<main id="main">
+  <div class="center" id="login">
+    <img src="icon-192.png" alt="" width="96" height="96" style="border-radius:20px">
+    <p class="msg">Entra con la misma cuenta de Google conectada al programa de la tienda.</p>
+    <button class="primary" id="signin">Entrar con Google</button>
+  </div>
+  <div id="content" class="hidden"></div>
+</main>
+
+<nav id="tabs" class="hidden">
+  <button data-tab="hoy" class="on"><span>◉</span>Hoy</button>
+  <button data-tab="ventas"><span>🧾</span>Ventas</button>
+  <button data-tab="inventario"><span>📦</span>Inventario</button>
+  <button data-tab="creditos"><span>👤</span>Créditos</button>
+</nav>
+
+<script>
+// ====== CONFIGURACIÓN: pega aquí el ID de cliente WEB de Google (ver la guía) ======
+const CLIENT_ID = "152027303514-8pjl5pbm022vt5l8mp6ife6rsu1gaj87.apps.googleusercontent.com";
+// ===================================================================================
+
+const SCOPE = "https://www.googleapis.com/auth/drive.file";
+const FILE_NAME = "consulta.json";
+const LOW_STOCK = 3;
+const money = new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} }
+};
+
+let data = null, tab = "hoy", invFilter = "todos", invQuery = "", saleQuery = "", timer = null;
+
+// ---------- Inicio de sesión con Google (sin servidor propio) ----------
+function redirectUri() { return location.origin + location.pathname; }
+
+function signIn() {
+  const state = crypto.getRandomValues(new Uint32Array(2)).join("-");
+  store.set("ac_state", state);
+  const params = new URLSearchParams({
+    client_id: CLIENT_ID, redirect_uri: redirectUri(), response_type: "token",
+    scope: SCOPE, include_granted_scopes: "true", state
+  });
+  location.href = "https://accounts.google.com/o/oauth2/v2/auth?" + params;
+}
+
+function readTokenFromUrl() {
+  if (!location.hash.includes("access_token") && !location.hash.includes("error")) return;
+  const p = new URLSearchParams(location.hash.slice(1));
+  history.replaceState(null, "", redirectUri());
+  if (p.get("state") !== store.get("ac_state")) return;
+  store.del("ac_state");
+  if (p.get("access_token")) {
+    store.set("ac_token", p.get("access_token"));
+    store.set("ac_exp", String(Date.now() + (Number(p.get("expires_in") || 3600) - 60) * 1000));
+  }
+}
+
+function token() {
+  const t = store.get("ac_token"), exp = Number(store.get("ac_exp") || 0);
+  return t && Date.now() < exp ? t : null;
+}
+
+// ---------- Lectura del resumen desde el Drive ----------
+async function drive(url) {
+  const r = await fetch(url, { headers: { Authorization: "Bearer " + token() } });
+  if (r.status === 401) { store.del("ac_token"); throw new Error("auth"); }
+  if (!r.ok) throw new Error("Google Drive respondió " + r.status);
+  return r;
+}
+
+async function load() {
+  if (!token()) { showLogin(); return; }
+  $("#refresh").disabled = true;
+  try {
+    const q = encodeURIComponent(`name='${FILE_NAME}' and trashed=false`);
+    const list = await (await drive(`https://www.googleapis.com/drive/v3/files?q=${q}&orderBy=modifiedTime%20desc&pageSize=1&fields=files(id)`)).json();
+    if (!list.files || !list.files.length) {
+      showContent(`<div class="card center"><p class="msg">Todavía no hay datos en el Drive.<br>Conecta el programa de la tienda en Configuración → Nube y celular, y haz una venta o toca «Subir ahora».</p></div>`);
+      return;
+    }
+    data = await (await drive(`https://www.googleapis.com/drive/v3/files/${list.files[0].id}?alt=media`)).json();
+    store.set("ac_cache", JSON.stringify(data));
+    render();
+  } catch (e) {
+    if (e.message === "auth") { showLogin(); return; }
+    const cached = store.get("ac_cache");
+    if (cached) { data = JSON.parse(cached); render(`Sin conexión: se muestran los últimos datos guardados en el celular.`); }
+    else showContent(`<div class="error">${esc(e.message)}</div>`);
+  } finally { $("#refresh").disabled = false; }
+}
+
+function showLogin() {
+  $("#login").classList.remove("hidden");
+  $("#content").classList.add("hidden");
+  $("#tabs").classList.add("hidden");
+  $("#updated").textContent = "Consulta en línea";
+}
+function showContent(html) {
+  $("#login").classList.add("hidden");
+  $("#tabs").classList.remove("hidden");
+  const c = $("#content"); c.classList.remove("hidden"); c.innerHTML = html;
+}
+
+// ---------- Pantallas ----------
+function ago(iso) {
+  const min = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (min < 1) return "hace menos de 1 min";
+  if (min < 60) return `hace ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `hace ${h} h ${min % 60} min`;
+  return new Date(iso).toLocaleString("es-CO", { dateStyle: "medium", timeStyle: "short" });
+}
+
+function render(warning) {
+  if (!data) return;
+  const minutes = (Date.now() - new Date(data.generado).getTime()) / 60000;
+  const u = $("#updated");
+  u.textContent = `Actualizado ${ago(data.generado)} · ${data.equipo}`;
+  u.classList.toggle("old", data.caja.abierta && minutes > 30);
+  const views = { hoy: viewToday, ventas: viewSales, inventario: viewInventory, creditos: viewCredits };
+  showContent((warning ? `<div class="error">${esc(warning)}</div>` : "") + views[tab]());
+  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+  bindInputs();
+}
+
+function viewToday() {
+  const c = data.caja, h = data.hoy;
+  const isToday = new Date(data.generado).toDateString() === new Date().toDateString();
+  let html = `<div class="card"><h2>Ventas de hoy</h2>
+    <div class="big">${money.format(isToday ? h.total : 0)}</div>
+    <div class="sub">${isToday ? h.recibos : 0} recibo(s)${isToday ? "" : " · sin datos de hoy todavía"}</div>
+    ${isToday ? `<div class="grid" style="margin-top:12px">
+      <div class="kpi"><div class="l">Efectivo</div><div class="v">${money.format(h.efectivo)}</div></div>
+      <div class="kpi"><div class="l">Transferencia</div><div class="v">${money.format(h.transferencia)}</div></div>
+      <div class="kpi"><div class="l">Tarjeta</div><div class="v">${money.format(h.tarjeta)}</div></div>
+      <div class="kpi"><div class="l">Crédito</div><div class="v">${money.format(h.credito)}</div></div></div>` : ""}</div>`;
+  if (isToday && h.porArea.length) html += `<div class="card"><h2>Por área</h2>${h.porArea.map(a =>
+    `<div class="row"><div class="name">${esc(a.area)}</div><div class="amt">${money.format(a.total)}</div></div>`).join("")}</div>`;
+  html += `<div class="card"><h2>Caja</h2>` + (c.abierta
+    ? `<span class="pill ok">Abierta</span> <span class="sub">desde ${new Date(c.abiertaDesde).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" })}</span>
+       <div class="row" style="margin-top:6px"><div>Base inicial</div><div class="amt">${money.format(c.baseInicial)}</div></div>
+       <div class="row"><div>Efectivo recibido</div><div class="amt">${money.format(c.efectivo)}</div></div>
+       <div class="row"><div>Transferencias</div><div class="amt">${money.format(c.transferencia)}</div></div>
+       <div class="row"><div>Tarjeta</div><div class="amt">${money.format(c.tarjeta)}</div></div>
+       <div class="row"><div>Gastos de caja</div><div class="amt">−${money.format(c.gastos)}</div></div>
+       <div class="row"><div>Pagos a proveedores</div><div class="amt">−${money.format(c.pagosCompras)}</div></div>
+       <div class="row"><div class="name">Efectivo esperado en caja</div><div class="amt">${money.format(c.efectivoEsperado)}</div></div>`
+    : `<span class="pill off">Cerrada</span>`) + `</div>`;
+  if (data.cierres.length) html += `<div class="card"><h2>Últimos cierres</h2>${data.cierres.map(x => `<div class="row"><div class="main">
+      <div class="name">${new Date(x.fecha).toLocaleString("es-CO", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</div>
+      <div class="meta">Contado ${money.format(x.efectivoContado)} · Diferencia ${money.format(x.diferencia)}</div></div>
+      <div class="amt">${money.format(x.ventas)}</div></div>`).join("")}</div>`;
+  return html;
+}
+
+function viewSales() {
+  const isToday = new Date(data.generado).toDateString() === new Date().toDateString();
+  if (!isToday) return `<div class="card empty">Aún no hay ventas registradas hoy.</div>`;
+  const q = saleQuery.trim().toLowerCase();
+  const rows = data.ventasHoy.filter(v => !q || `${v.producto} ${v.recibo} ${v.cliente ?? ""} ${v.pago}`.toLowerCase().includes(q));
+  return `<input type="search" id="saleSearch" placeholder="Buscar producto, recibo o cliente" value="${esc(saleQuery)}">
+    <div class="card"><h2>${rows.length} línea(s) de venta</h2>${rows.map(v => `<div class="row"><div class="main">
+      <div class="name ${v.anulada ? "void" : ""}">${esc(v.producto)}${v.presentacion ? ` <span class="meta">· ${esc(v.presentacion)}</span>` : ""}</div>
+      <div class="meta">${v.hora} · V-${String(v.recibo).padStart(6, "0")} · ${v.cantidad} × · ${esc(v.pago)}${v.cliente ? " · " + esc(v.cliente) : ""}${v.anulada ? " · ANULADA" : ""}</div></div>
+      <div class="amt">${money.format(v.total)}</div></div>`).join("") || `<div class="empty">Sin resultados</div>`}</div>`;
+}
+
+function viewInventory() {
+  const q = invQuery.trim().toLowerCase();
+  const level = p => p.existencia == null ? "na" : p.existencia <= 0 ? "out" : p.existencia <= LOW_STOCK ? "low" : "ok";
+  const rows = data.inventario.filter(p => (!q || `${p.nombre} ${p.codigo}`.toLowerCase().includes(q))
+    && (invFilter === "todos" || (invFilter === "bajos" && ["low", "out"].includes(level(p))) || (invFilter === "agotados" && level(p) === "out")));
+  const counts = { out: data.inventario.filter(p => level(p) === "out").length, low: data.inventario.filter(p => level(p) === "low").length };
+  const chip = (id, text) => `<button class="chip ${invFilter === id ? "on" : ""}" data-filter="${id}">${text}</button>`;
+  return `<input type="search" id="invSearch" placeholder="Buscar producto o código" value="${esc(invQuery)}">
+    <div class="chips">${chip("todos", "Todos")}${chip("bajos", `Bajos (${counts.low + counts.out})`)}${chip("agotados", `Agotados (${counts.out})`)}</div>
+    <div class="card"><h2>${rows.length} producto(s)</h2>${rows.slice(0, 300).map(p => {
+      const l = level(p);
+      const pill = l === "na" ? `<span class="pill off">Servicio</span>` : `<span class="pill ${l}">${p.existencia} ${esc(p.unidad)}</span>`;
+      return `<div class="row"><div class="main"><div class="name">${esc(p.nombre)}</div>
+        <div class="meta">${esc(p.codigo)} · ${esc(p.area)} · ${money.format(p.precio)}</div></div><div>${pill}</div></div>`;
+    }).join("") || `<div class="empty">Sin resultados</div>`}
+    ${rows.length > 300 ? `<div class="empty">Mostrando 300 de ${rows.length}. Usa el buscador.</div>` : ""}</div>`;
+}
+
+function viewCredits() {
+  const total = data.creditos.reduce((s, c) => s + c.saldo, 0);
+  return `<div class="card"><h2>Cuentas por cobrar</h2><div class="big">${money.format(total)}</div>
+    <div class="sub">${data.creditos.length} cuenta(s) con saldo</div></div>
+    <div class="card">${data.creditos.map(c => {
+      const overdue = c.vence && new Date(c.vence + "T23:59:59") < new Date();
+      return `<div class="row"><div class="main"><div class="name">${esc(c.cliente)}</div>
+        <div class="meta">${esc(c.referencia)} · ${c.fecha}${c.vence ? ` · vence ${c.vence}` : ""}${c.telefono ? ` · <a href="tel:${esc(c.telefono)}">${esc(c.telefono)}</a>` : ""}</div>
+        ${overdue ? `<span class="pill out">Vencida</span>` : ""}</div><div class="amt">${money.format(c.saldo)}</div></div>`;
+    }).join("") || `<div class="empty">No hay saldos pendientes</div>`}</div>`;
+}
+
+function bindInputs() {
+  const keep = (id, setter) => {
+    const el = document.getElementById(id); if (!el) return;
+    el.oninput = () => { setter(el.value); const pos = el.selectionStart; render(); const n = document.getElementById(id); n.focus(); n.setSelectionRange(pos, pos); };
+  };
+  keep("invSearch", v => invQuery = v);
+  keep("saleSearch", v => saleQuery = v);
+  document.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { invFilter = b.dataset.filter; render(); });
+}
+
+// ---------- Arranque ----------
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => { tab = b.dataset.tab; render(); window.scrollTo(0, 0); });
+$("#signin").onclick = signIn;
+$("#refresh").onclick = () => token() ? load() : signIn();
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && token()) load(); });
+
+if (CLIENT_ID.startsWith("PEGA_AQUI")) {
+  $("#login").innerHTML = `<p class="msg">Falta configurar el ID de cliente web de Google en index.html (ver la guía).</p>`;
+} else {
+  readTokenFromUrl();
+  const cached = store.get("ac_cache");
+  if (cached && !token()) { data = JSON.parse(cached); render("Toca ↻ para entrar con Google y ver los datos actuales."); }
+  else load();
+  timer = setInterval(() => { if (document.visibilityState === "visible" && token()) load(); }, 60000);
+}
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>
